@@ -1,0 +1,410 @@
+
+import java_cup.runtime.*;
+
+
+terminal CLASS;
+terminal FINAL;
+terminal VOID;
+terminal String INT;
+terminal String CHAR;
+terminal String BOOLEAN;
+terminal String FLOAT;
+terminal ELSE;
+terminal IF;
+terminal WHILE;
+terminal String RETURN;
+terminal READ;
+terminal PRINT;
+terminal PRINTLINE;
+terminal AND;
+terminal OR;
+terminal ASTERISK;
+terminal PLUS;
+terminal MINUS;
+terminal FSLASH;
+terminal SEMI;
+terminal EQUALS;
+terminal COMMA;
+terminal LPAREN;
+terminal RPAREN;
+terminal LSQR;
+terminal RSQR;
+terminal LCURLY;
+terminal RCURLY;
+terminal INCREMENT;
+terminal DECREMENT;
+terminal NOT;
+terminal QUESTION;
+terminal COLON;
+terminal GT;
+terminal LT;
+terminal LTE;
+terminal GTE;
+terminal EQ;
+terminal NEQ;
+terminal TRUE;
+terminal FALSE;
+terminal String ID;
+terminal int NUMBERLIT;
+terminal String CHARLIT;
+terminal LETTER;
+terminal double FLOATLIT;
+terminal String STRING;
+terminal COMMENT;
+terminal MULTILINE;
+
+non terminal Program program;
+non terminal Stmts stmts;
+non terminal Memberdecls memberdecls;
+non terminal Fielddecls fielddecls;
+non terminal Methoddecls methoddecls;
+non terminal Fielddecl fielddecl;
+non terminal Optionalfinal optionalfinal;
+non terminal Type type;
+non terminal Optionalexpression optionalexpression;
+non terminal Returntype returntype;
+non terminal Argdecls argdecls;
+non terminal Optionalsemi optionalsemi;
+non terminal ArgdeclList argdecllist;
+non terminal Argdecl argdecl;
+non terminal Name name;
+non terminal Readlist readlist;
+non terminal Printlist printlist;
+non terminal Printlinelist printlinelist;
+non terminal Args args;
+non terminal Methoddecl methoddecl;
+non terminal Binaryop binaryop;
+non terminal FieldsBase fields_base;
+non terminal FielddeclBase fielddecl_base;
+non terminal MethoddeclBase methoddecl_base;
+non terminal TypeLit typelit;
+non terminal IfBase if_base;
+non terminal WhileBase while_base;
+non terminal FunctionStatement function_statement;
+non terminal FunctionExpr function_expression;
+non terminal ActionExpr action_expression;
+non terminal TernaryExpr ternary_expression;
+non terminal TypecastExpr typecast_expression;
+
+non terminal Stmt stmt;
+non terminal IfStatement if_statement;
+non terminal WhileStatement while_statement;
+non terminal AssmntStatement assmnt_statement;
+
+non terminal NameStatement name_statement;
+non terminal FielddeclsStatement fielddecls_statement;
+non terminal Expr expr;
+non terminal NonArgStatement nonarg_statement;
+non terminal ScopeStatement compound_statement;
+
+precedence left COMMA;
+precedence right EQUALS;
+precedence left OR;
+precedence left AND;
+precedence left EQ, NEQ;
+precedence left GT, LT, LTE, GTE;
+precedence left PLUS, MINUS;
+precedence left ASTERISK, FSLASH;
+precedence right INCREMENT, DECREMENT;
+
+program ::= CLASS ID:i LCURLY memberdecls:m RCURLY
+	                    {: RESULT = new Program(i, m); :}
+	     ;
+
+memberdecls ::= fields_base:f
+                        {: RESULT = new Memberdecls(f); :}
+                        ;
+
+fields_base ::= fielddecl:f fields_base:fb
+                        {: RESULT = new FieldsBase(f, fb); :}
+                        |
+                        methoddecl:m methoddecls:ms
+                        {: RESULT = new FieldsBase(m, ms); :}
+                        |
+                        {: RESULT = null; :}
+                        ;
+
+fielddecls ::= fielddecl:f fielddecls:ff
+                        {: RESULT = new Fielddecls(f, ff); :}
+                        |
+                        {: RESULT = null; :}
+                        ;
+
+methoddecls ::= methoddecl:m methoddecls:mm
+                        {: RESULT = new Methoddecls(m, mm); :}
+                        |
+                        {: RESULT = null; :}
+                        ;
+
+fielddecl ::= optionalfinal:f fielddecl_base:fb optionalexpression:o SEMI
+                        {: RESULT = new FielddeclSingle(f, fb, o); :}
+                        |
+                        fielddecl_base:fb LSQR NUMBERLIT:n RSQR SEMI
+                        {: RESULT = new FielddeclArray(fb, n); :}
+                        |
+                        fielddecl_base:f optionalexpression:o SEMI
+                        {: RESULT = new FielddeclSingle(f, o); :}
+                        ;
+
+fielddecl_base ::= type:t ID:id
+                        {: RESULT = new FielddeclBase(t, id); :}
+                        ;
+
+optionalexpression ::= EQUALS expr:e
+                        {: RESULT = new Optionalexpression(e); :}
+                        |
+                        {: RESULT = null; :}
+                        ;
+
+optionalfinal ::= FINAL
+                        {: RESULT = new Optionalfinal(); :}
+                        ;
+
+methoddecl ::= methoddecl_base:mb LPAREN argdecls:a RPAREN LCURLY fielddecls:f stmts:s RCURLY optionalsemi:o
+                        {: RESULT = new Methoddecl(mb, a, f, s, o); :}
+                        |
+                        methoddecl_base:mb LPAREN RPAREN LCURLY fielddecls:f stmts:s RCURLY optionalsemi:o
+                        {: RESULT = new Methoddecl(mb, f, s, o); :}
+                        ;
+
+methoddecl_base ::= type:t ID:id
+                        {: RESULT = new MethoddeclBase(t, id); :}
+                        |
+                        VOID ID:id
+                        {: RESULT = new MethoddeclBase(new VoidType(), id); :}
+                        ;
+
+optionalsemi ::= SEMI
+			            {: RESULT = new Optionalsemi(); :}
+			            |
+			            {: RESULT = null; :}
+			            ;
+
+type ::= FLOAT:f
+                        {: RESULT = new FloatType(); :}
+                        |
+                        INT:i
+                        {: RESULT = new IntType(); :}
+                        |
+                        CHAR:c
+                        {: RESULT = new CharType(); :}
+                        |
+                        BOOLEAN:b
+                        {: RESULT = new BoolType(); :}
+                        ;
+
+argdecls ::= argdecl:a COMMA argdecls:as
+                        {: RESULT = new Argdecls(a, as); :}
+                        |
+                        argdecl:a
+                        {: RESULT = new Argdecls(a); :}
+                        ;
+
+argdecl ::= type:t ID:id
+                        {: RESULT = new ArgdeclSingle(t, id); :}
+                        |
+                        type:t ID:id LSQR RSQR
+                        {: RESULT = new ArgdeclArray(t, id); :}
+                        ;
+
+stmts ::= stmt:s stmts:ss
+                        {: RESULT = new Stmts(s, ss); :}
+                        |
+                        {: RESULT = null; :}
+                        ;
+
+stmt ::= if_statement:i
+                        {: RESULT = i; :}
+                        |
+                        while_statement:w
+                        {: RESULT = w; :}
+                        |
+                        name:n EQUALS expr:e SEMI
+                        {: RESULT = new AssmntStatement(n, e); :}
+                        |
+                        READ LPAREN readlist:r RPAREN SEMI
+                        {: RESULT = new ReadStatement(r); :}
+                        |
+                        PRINT LPAREN printlist:p RPAREN SEMI
+                        {: RESULT = new PrintStatement(p); :}
+                        |
+                        PRINTLINE LPAREN printlinelist:pl RPAREN SEMI
+                        {: RESULT = new PrintlineStatement(pl); :}
+                        |
+                        function_statement:i
+                        {: RESULT = i; :}
+                        |
+                        RETURN SEMI
+                        {: RESULT = new ReturnStatement(); :}
+                        |
+                        RETURN expr:e SEMI
+                        {: RESULT = new ReturnValueStmt(e); :} //create class, remove from ReturnStatement class
+                        |
+                        name:n INCREMENT SEMI
+                        {: RESULT = new NameStatement(n, "++"); :}
+                        |
+                        name:n DECREMENT SEMI
+                        {: RESULT = new NameStatement(n, "--"); :}
+                        ;
+
+if_statement ::= if_base:i compound_statement:c1 ELSE compound_statement:c2
+                        {: RESULT = new IfStatement(i, c1, c2); :}
+                        ;
+
+if_base ::= IF LPAREN expr:e RPAREN
+                        {: RESULT = new IfBase(e); :}
+                        ;
+
+compound_statement ::= LSQR fielddecls:f stmts:s RSQR
+                        {: RESULT = new ScopeStatement(f, s); :}
+                        ;
+
+while_statement ::= while_base:w compound_statement:c
+                        {: RESULT = new WhileStatement(w, c); :}
+                        ;
+
+while_base ::= WHILE LPAREN expr:e RPAREN
+                        {: RESULT = new WhileBase(e); :}
+                        ;
+
+function_statement ::= ID:id LPAREN RPAREN SEMI
+                        {: RESULT = new NonArgStatement(id); :}
+                        |
+                        ID:id LPAREN args:a RPAREN
+                        {: RESULT = new ArgStatement(id, a); :}
+                        ;
+
+fielddecls_statement ::= LCURLY fielddecls:f stmts:s RCURLY optionalsemi:o
+                        {: RESULT = new FielddeclsStatement(f, s, o); :}
+                        ;
+
+name ::= ID:id
+                        {: RESULT = new Name(id); :}
+                        |
+                        ID:id LSQR expr:e RSQR
+                        {: RESULT = new NameArray(id, e); :}
+                        ;
+
+args ::= expr:e COMMA args:a
+                        {: RESULT = new Args(e, a); :}
+        | expr:e
+                        {: RESULT = new Args(e); :}
+        ;
+
+readlist ::= name:n COMMA readlist:rl
+                        {: RESULT = new Readlist(n, rl); :}
+        | name:n
+                        {: RESULT = new Readlist(n); :}
+        ;
+
+printlist ::= expr:e COMMA printlist:p
+                        {: RESULT = new Printlist(e, p); :}
+        | expr:e
+                        {: RESULT = new Printlist(e); :}
+        ;
+
+printlinelist ::=
+                        {: RESULT = new Printlinelist(); :}
+         ;
+
+expression ::= name:n
+                        {: RESULT = n; :}
+                        |
+                        function_expression:f
+                        {: RESULT = f; :}
+                        |
+                        typelit:t
+                        {: RESULT = t; :}
+                        |
+                        LPAREN expr:e RPAREN
+                        {: RESULT = new ParenExpr(e); :}
+                        |
+                        action_expression:a
+                        {: RESULT = a; :}
+                        |
+                        ternary_expression:t
+                        {: RESULT = t; :}
+                        ;
+
+action_expression ::= NOT expr:e
+                        {: RESULT = new UnaryExpr("~", e); :}
+                        |
+                        MINUS expr:e
+                        {: RESULT = new UnaryExpr("-", e); :}
+                        |
+                        PLUS expr:e
+                        {: RESULT = new UnaryExpr("+", e); :}
+                        |
+                        expr:e1 ASTERISK expr:e2
+                        {: RESULT = new BinaryExpr(e1, "*", e2); :}
+                        |
+                        expr:e1 FSLASH expr:e2
+                        {: RESULT = new BinaryExpr(e1, "/", e2); :}
+                        |
+                        expr:e1 PLUS expr:e2
+                        {: RESULT = new BinaryExpr(e1, "+", e2); :}
+                        |
+                        expr:e1 MINUS expr:e2
+                        {: RESULT = new BinaryExpr(e1, "-", e2); :}
+                        |
+                        expr:e1 LT expr:e2
+                        {: RESULT = new BinaryExpr(e1, "<", e2); :}
+                        |
+                        expr:e1 GT expr:e2
+                        {: RESULT = new BinaryExpr(e1, ">", e2); :}
+                        |
+                        expr:e1 LTE expr:e2
+                        {: RESULT = new BinaryExpr(e1, "<=", e2); :}
+                        |
+                        expr:e1 GTE expr:e2
+                        {: RESULT = new BinaryExpr(e1, ">=", e2); :}
+                        |
+                        expr:e1 EQ expr:e2
+                        {: RESULT = new BinaryExpr(e1, "==", e2); :}
+                        |
+                        expr:e1 NEQ expr:e2
+                        {: RESULT = new BinaryExpr(e1, "<>", e2); :}
+                        |
+                        expr:e1 OR expr:e2
+                        {: RESULT = new BinaryExpr(e1, "||", e2); :}
+                        |
+                        expr:e1 AND expr:e2
+                        {: RESULT = new BinaryExpr(e1, "&&", e2); :}
+                        |
+                        typecast_expression:t
+                        {: RESULT = t; :}
+                        ;
+
+typecast_expression ::= LPAREN type:t RPAREN expr:e
+                        {: RESULT = new TypecastExpr(t, e); :}
+                        ;
+
+ternary_expression ::= LPAREN expr:e1 QUESTION expr:e2 COLON expr:e3 RPAREN
+                        {: RESULT = new TernaryExpr(e1, e2, e3); :}
+                        ;
+
+function_expression ::= ID:id LPAREN RPAREN
+                        {: RESULT = new VoidFunctionExpr(id); :}
+                        |
+                        ID:id LPAREN args:a RPAREN
+                        {: RESULT = new ArgFunctionExpr(id, a); :}
+                        ;
+
+typelit ::= NUMBERLIT:n
+            	        {: RESULT = new IntLit(n); :}
+            	        |
+            	        CHARLIT:c
+            	        {: RESULT = new CharLit(c); :}
+            	        |
+            	        STRING:s
+            	        {: RESULT = new StrLit(s); :}
+            	        |
+            	        FLOATLIT:f
+            	        {: RESULT = new FloatLit(f); :}
+            	        |
+            	        TRUE
+            	        {: RESULT = new BoolLit("true"); :}
+            	        |
+            	        FALSE
+            	        {: RESULT = new BoolLit("false"); :}
+            	        ;

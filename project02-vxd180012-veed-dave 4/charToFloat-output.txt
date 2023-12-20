@@ -1,0 +1,7 @@
+Error: Syntax error @ Symbol: ID (unknown:2/1(-1) - unknown:2/1(-1))
+java.lang.NullPointerException: Cannot invoke "java.lang.Class.getFields()" because the return value of "java_cup.runtime.lr_parser.getSymbolContainer()" is null
+	at java_cup.runtime.lr_parser.symbl_name_from_id(lr_parser.java:456)
+	at java_cup.runtime.lr_parser.report_expected_token_ids(lr_parser.java:446)
+	at java_cup.runtime.lr_parser.syntax_error(lr_parser.java:433)
+	at java_cup.runtime.lr_parser.parse(lr_parser.java:725)
+	at TypeCheckingTest.main(TypeCheckingTest.java:44)
